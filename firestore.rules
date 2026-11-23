@@ -1,0 +1,298 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function validPageId(pageId) {
+      return pageId in [
+        'home',
+        'about',
+        'services',
+        'how-it-works',
+        'service-dry-van',
+        'service-reefer',
+        'service-flatbed',
+        'service-power-only',
+        'faq',
+        'contact',
+        'carrier-signup',
+        'privacy-policy',
+        'terms',
+        'cookie-policy',
+        'disclaimer',
+        'service-agreement',
+        'refund-cancellation-policy',
+        'accessibility-statement',
+        'data-security',
+        'report-security-issue'
+      ];
+    }
+
+    function validSeo(seo) {
+      return seo is map
+        && seo.keys().hasOnly(['title', 'description', 'canonicalPath', 'socialImage'])
+        && seo.title is string
+        && seo.title.size() <= 120
+        && seo.description is string
+        && seo.description.size() <= 320
+        && seo.canonicalPath is string
+        && seo.canonicalPath.size() <= 200
+        && (!('socialImage' in seo) || seo.socialImage is string);
+    }
+
+    function validPageContent(pageId) {
+      return validPageId(pageId)
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion',
+          'pageId',
+          'seo',
+          'sections',
+          'createdAt',
+          'updatedAt',
+          'updatedBy',
+          'publishedAt',
+          'publishedBy',
+          'version'
+        ])
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.pageId == pageId
+        && validSeo(request.resource.data.seo)
+        && request.resource.data.sections is list
+        && request.resource.data.sections.size() <= 40;
+    }
+
+    function validSettingsContent() {
+      return request.resource.data.keys().hasOnly([
+          'schemaVersion',
+          'theme',
+          'navigation',
+          'footer',
+          'contact',
+          'createdAt',
+          'updatedAt',
+          'updatedBy',
+          'publishedAt',
+          'publishedBy',
+          'version'
+        ])
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.theme is map
+        && request.resource.data.theme.keys().hasOnly([
+          'colors',
+          'backgrounds',
+          'buttons',
+          'typography',
+          'layout'
+        ])
+        && request.resource.data.navigation is list
+        && request.resource.data.navigation.size() <= 20
+        && request.resource.data.footer is map
+        && request.resource.data.contact is map;
+    }
+
+    function validMediaMetadata(assetId) {
+      return request.resource.data.keys().hasOnly([
+          'assetId',
+          'storagePath',
+          'fileName',
+          'contentType',
+          'sizeBytes',
+          'altText',
+          'uploadedBy',
+          'uploadedAt',
+          'width',
+          'height',
+          'durationMs',
+          'version'
+        ])
+        && request.resource.data.assetId == assetId
+        && request.resource.data.storagePath is string
+        && request.resource.data.fileName is string
+        && request.resource.data.contentType in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/avif',
+          'video/mp4',
+          'video/webm'
+        ]
+        && request.resource.data.sizeBytes is int
+        && request.resource.data.sizeBytes > 0
+        && request.resource.data.sizeBytes <= 104857600
+        && request.resource.data.altText is string
+        && request.resource.data.altText.size() <= 500
+        && request.resource.data.uploadedBy == request.auth.uid;
+    }
+
+    match /cmsDrafts/{pageId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && validPageContent(pageId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && !('publishedAt' in request.resource.data)
+        && !('publishedBy' in request.resource.data)
+        && !('version' in request.resource.data);
+      allow update: if isAdmin()
+        && validPageContent(pageId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && !('version' in request.resource.data)
+        && !('publishedAt' in request.resource.data)
+        && !('publishedBy' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /cmsPublished/{pageId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && validPageContent(pageId)
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version == 1
+        && !('createdAt' in request.resource.data)
+        && !('updatedAt' in request.resource.data)
+        && !('updatedBy' in request.resource.data);
+      allow update: if isAdmin()
+        && validPageContent(pageId)
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version == resource.data.version + 1
+        && !('createdAt' in request.resource.data)
+        && !('updatedAt' in request.resource.data)
+        && !('updatedBy' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /cmsSettingsDrafts/{settingsId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && settingsId == 'global'
+        && validSettingsContent()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && !('publishedAt' in request.resource.data)
+        && !('publishedBy' in request.resource.data)
+        && !('version' in request.resource.data);
+      allow update: if isAdmin()
+        && settingsId == 'global'
+        && validSettingsContent()
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && !('publishedAt' in request.resource.data)
+        && !('publishedBy' in request.resource.data)
+        && !('version' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /cmsSettings/{settingsId} {
+      allow get: if settingsId == 'global';
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && settingsId == 'global'
+        && validSettingsContent()
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version == 1
+        && !('createdAt' in request.resource.data)
+        && !('updatedAt' in request.resource.data)
+        && !('updatedBy' in request.resource.data);
+      allow update: if isAdmin()
+        && settingsId == 'global'
+        && validSettingsContent()
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version == resource.data.version + 1
+        && !('createdAt' in request.resource.data)
+        && !('updatedAt' in request.resource.data)
+        && !('updatedBy' in request.resource.data);
+      allow delete: if isAdmin() && settingsId == 'global';
+    }
+
+    match /cmsRevisions/{revisionId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && validPageContent(request.resource.data.pageId)
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion',
+          'pageId',
+          'seo',
+          'sections',
+          'publishedAt',
+          'publishedBy',
+          'version'
+        ])
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version is int
+        && request.resource.data.version > 0;
+      allow update, delete: if false;
+    }
+
+    match /cmsSettingsRevisions/{revisionId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && validSettingsContent()
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion',
+          'theme',
+          'navigation',
+          'footer',
+          'contact',
+          'publishedAt',
+          'publishedBy',
+          'version'
+        ])
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.version is int
+        && request.resource.data.version > 0;
+      allow update, delete: if false;
+    }
+
+    match /cmsMediaDrafts/{assetId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && validMediaMetadata(assetId)
+        && !('version' in request.resource.data)
+        && request.resource.data.uploadedAt == request.time
+        && request.resource.data.storagePath.matches(
+          '^cms-drafts/' + request.auth.uid + '/' + assetId + '/[^/]+$'
+        );
+      allow update: if isAdmin()
+        && validMediaMetadata(assetId)
+        && !('version' in request.resource.data)
+        && request.resource.data.uploadedAt == request.time
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.storagePath.matches(
+          '^cms-drafts/' + request.auth.uid + '/' + assetId + '/[^/]+$'
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /cmsMediaPublished/{assetId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+        && validMediaMetadata(assetId)
+        && request.resource.data.version is int
+        && request.resource.data.version > 0
+        && request.resource.data.storagePath.matches(
+          '^cms-published/' + assetId + '/' + request.resource.data.version + '/[^/]+$'
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

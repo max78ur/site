@@ -1,0 +1,88 @@
+export const services = [
+    {
+        id: 'dry-van',
+        title: 'Dry Van Dispatch',
+        subtitle: 'General freight hauling',
+        description: 'Reliable dry van dispatch for boxed, palletized, and general freight. We secure the best-paying loads for your 53-foot trailers across all 48 states.',
+        icon: 'Package',
+        color: 'bg-red-100 text-red-600',
+        route: '/services/dry-van',
+        features: [
+            'Dry van load booking',
+            'Rate negotiation',
+            'Broker communication',
+            '24/7 dispatch support',
+        ],
+    },
+    {
+        id: 'reefer',
+        title: 'Reefer Dispatch',
+        subtitle: 'Temperature-controlled freight',
+        description: 'Refrigerated trailer dispatch for perishable goods. From produce to pharmaceuticals, we keep your reefer units moving with precise temperature monitoring.',
+        icon: 'Snowflake',
+        color: 'bg-blue-100 text-blue-600',
+        route: '/services/reefer',
+        features: [
+            'Reefer load sourcing',
+            'Temperature compliance',
+            'Cold chain coordination',
+            'Round-the-clock support',
+        ],
+    },
+    {
+        id: 'flatbed',
+        title: 'Flatbed Dispatch',
+        subtitle: 'Oversized and heavy equipment',
+        description: 'Flatbed and step-deck dispatch for construction materials, machinery, and oversized loads. We handle permits, routing, and securement compliance.',
+        icon: 'Truck',
+        color: 'bg-amber-100 text-amber-600',
+        route: '/services/flatbed',
+        features: [
+            'Flatbed load booking',
+            'Oversize permit support',
+            'Heavy equipment hauling',
+            'Securement compliance',
+        ],
+    },
+    {
+        id: 'power-only',
+        title: 'Power Only Dispatch',
+        subtitle: 'Tractor-only hauling',
+        description: 'Power-only dispatch for carriers with trailers needing a tractor. We connect your power unit with drop-and-hook loads for maximum uptime.',
+        icon: 'Zap',
+        color: 'bg-purple-100 text-purple-600',
+        route: '/services/power-only',
+        features: [
+            'Drop-and-hook loads',
+            'Trailer pool management',
+            'Quick turnaround',
+            'Minimal deadhead miles',
+        ],
+    },
+];
+export const coreServices = [
+    {
+        id: 'load-booking',
+        title: 'Load Booking',
+        description: 'We book the highest-paying loads for your equipment, handling everything from sourcing to confirmation so you can focus on driving.',
+        icon: 'ClipboardList',
+    },
+    {
+        id: 'rate-negotiation',
+        title: 'Rate Negotiation',
+        description: 'Our experienced dispatchers negotiate aggressive rates with brokers and shippers to maximize your revenue per mile.',
+        icon: 'DollarSign',
+    },
+    {
+        id: 'broker-communication',
+        title: 'Broker Communication',
+        description: 'We act as your single point of contact with brokers, handling check calls, paperwork, and issue resolution on your behalf.',
+        icon: 'Phone',
+    },
+    {
+        id: 'dispatch-support',
+        title: 'Dispatch Support',
+        description: '24/7 dispatch support including route planning, detention tracking, lumper coordination, and problem-solving on the road.',
+        icon: 'Headset',
+    },
+];

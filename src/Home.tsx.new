@@ -1,0 +1,54 @@
+﻿import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import Hero from '@/components/hero/CinematicHero';
+import CompanyIntro from '@/components/sections/CompanyIntro';
+import ServicesSection from '@/components/sections/Services';
+import WhyChoose from '@/components/sections/WhyChoose';
+import HowItWorks from '@/components/sections/HowItWorks';
+import CarrierBenefits from '@/components/sections/CarrierBenefits';
+import Statistics from '@/components/sections/Statistics';
+import Testimonials from '@/components/sections/Testimonials';
+import FAQ from '@/components/sections/FAQ';
+import ContactSection from '@/components/sections/Contact';
+import LoadingScreen from '@/components/loading/LoadingScreen';
+
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading complete after hero animations
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      {/* Loading Screen - shown initially */}
+      <Suspense fallback={
+        <LoadingScreen
+          isLoading={isLoading}
+          onComplete={() => setIsLoading(false)}
+        />
+      }>
+
+        {/* Cinematic Hero - shown after loading */}
+        <CinematicHero />
+
+        {/* Page Sections - overlay after hero */}
+        <div className="relative z-10 pt-24">
+          <CompanyIntro />
+          <ServicesSection />
+          <WhyChoose />
+          <HowItWorks />
+          <CarrierBenefits />
+          <Statistics />
+          <Testimonials />
+          <FAQ />
+          <ContactSection />
+        </div>
+      </Suspense>
+    </div>
+  );
+}
